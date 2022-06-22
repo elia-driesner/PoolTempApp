@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Get Request',
+      title: 'Pool Temperature',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -30,15 +30,27 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String temp = '';
+  String serverStatus = '';
 
   void getPoolTemp() async {
-    final response =
-        await http.get(Uri.parse('http://127.0.0.1:5000/poolTemp'));
-    final decoded = json.decode(response.body) as Map<String, dynamic>;
-
     setState(() {
-      temp = decoded['tC'];
+      serverStatus = 'Verbinde...';
     });
+    try {
+      final response =
+          await http.get(Uri.parse('http://127.0.0.1:5000/poolTemp'));
+      final decoded = json.decode(response.body) as Map<String, dynamic>;
+
+      setState(() {
+        temp = decoded['tC'];
+        serverStatus = 'Verbunden';
+      });
+    } catch (e) {
+      setState(() {
+        temp = '0.0';
+        serverStatus = 'Server Offline';
+      });
+    }
   }
 
   @override
@@ -82,6 +94,18 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+          Container(
+              child: Column(
+            children: [
+              Text('Server Status:',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              serverStatus == 'Verbunden'
+                  ? Text(serverStatus,
+                      style: TextStyle(fontSize: 20, color: Colors.green))
+                  : Text(serverStatus,
+                      style: TextStyle(fontSize: 20, color: Colors.red))
+            ],
+          ))
         ]),
       ),
     );
